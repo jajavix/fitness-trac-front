@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import { Link } from "react-router-dom";
 
-export default function Routines() {
+export default function Me() {
   //posts need to manage the post data coming from our stranger things app
   //so we need two pieces of info
   //a way of holding onto state: useState
@@ -68,7 +68,7 @@ export default function Routines() {
   return (
     <section>
       <div>
-        <h1>Welcome to Fitness Tracker</h1>
+        <h1>Welcome to Fitness Tracker: Routines</h1>
       </div>
       <hr></hr>
       <div className="post-card">
@@ -90,9 +90,9 @@ export default function Routines() {
         {routines &&
           filterRoutines.map((routine) => (
             <div key={routine._id} className="post-card">
-              <h4>Post ID: {routine.title}</h4>
-              <p>Post Title: {routine.description} </p>
-              <p>Price: {routine.price} </p>
+              <h4>Routine ID: {routine.title}</h4>
+              <p>Routine Title: {routine.description} </p>
+              <p>Routine: {routine.price} </p>
               <p>Location: {routine.location} </p>
               <Link to="routines/new">
                 <button>Edit Routines</button>

@@ -1,74 +1,106 @@
-import React, { useState } from "react";
-import { useHistory } from "react-router";
-import { Activity } from ".";
-import { postActivity } from "../util";
+import React, { useState, useEffect } from "react";
+import { useLocation, useHistory } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-const Activities = ({ activities, fetchActivities }) => {
-  const token = localStorage.getItem("token");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+export default function Activities() {
+  //posts need to manage the post data coming from our stranger things app
+  //so we need two pieces of info
+  //a way of holding onto state: useState
+  //a way of handling async effects: useEffect
 
+  //search box
+  const { search } = useLocation();
   const history = useHistory();
+  console.log("search", search);
+  const searchParams = new URLSearchParams(search);
+  console.log("searchParams", searchParams);
+  const searchTerm = searchParams.get("searchTerm") || "";
+  console.log("searchTerm", searchTerm);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await postActivity(token, name, description);
-      if (response) {
-        setName("");
-        setDescription("");
-        await fetchActivities();
-        history.push("/activities");
+  //post
+  const [activities, setActivities] = useState([]);
+  console.log(activities);
+
+  useEffect(() => {
+    //create as async fetch function
+    async function fetchActivities() {
+      try {
+        const response = await fetch(
+          `https://fitnesstrac-kr.herokuapp.com/api/activities`
+        );
+        //unpacked the response stream
+        const { success, data } = await response.json();
+        console.log(data);
+        if (success) {
+          setActivities(data.activities);
+        }
+
+        console.log(response);
+      } catch (error) {
+        console.log(error);
       }
-      return response;
-    } catch (error) {
-      console.error(error);
+    }
+
+    // call it
+    fetchActivities();
+  }, []);
+
+  //filter post function returns a boolean
+  const activityMatch = (activities, searchTerm) => {
+    const { location, title, price } = activities;
+    console.log("activities fields", location, title, price);
+    // console.log("searchTerm inside match", searchTerm);
+    const toCheck = [location, title, price];
+    for (const field of toCheck) {
+      if (field.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return true;
+      }
     }
   };
 
-  return (
-    <>
-      {token ? (
-        <div className="post-card">
-          <form onSubmit={handleSubmit}>
-            <fieldset>
-              <label>Name: </label>
-              <input
-                type="text"
-                placeholder="Activity Name"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                }}
-              ></input>
-            </fieldset>
-            <fieldset>
-              <label>Description: </label>
-              <input
-                type="text"
-                value={description}
-                placeholder="Activity Description"
-                onChange={(e) => {
-                  setDescription(e.target.value);
-                }}
-              ></input>
-            </fieldset>
-            <button type="submit">Add activity</button>
-          </form>
-        </div>
-      ) : null}
-      {activities ? (
-        <div className="post-card">
-          <span>Activities:</span>
-          {activities.map((activity) => (
-            <Activity key={activity.id} activity={activity} />
-          ))}
-        </div>
-      ) : (
-        "Loading..."
-      )}
-    </>
+  //filter variable to get posts, searchterm
+  const filterActivities = activities.filter((activity) =>
+    activityMatch(activities, searchTerm)
   );
-};
+  console.log("filterActivities", filterActivities);
 
-export default Activities;
+  //return
+  return (
+    <section>
+      <div>
+        <h1>Welcome to Fitness Tracker: Activities</h1>
+      </div>
+      <hr></hr>
+      <div className="post-card">
+        <h2>Search</h2>
+        <input
+          type="text"
+          placeholder="enter something"
+          onChange={(e) =>
+            history.push(
+              e.target.value
+                ? `/activities?searchTerm=${e.target.value}`
+                : "/activities"
+            )
+          }
+        />
+      </div>
+      <hr></hr>
+      <div className="'post-main-container">
+        {activities &&
+          filterActivities.map((activity) => (
+            <div key={activity._id} className="post-card">
+              <h4>Post ID: {activity.title}</h4>
+              <p>Post Title: {activity.description} </p>
+              <p>goal: {activity.goal} </p>
+              <p>Location: {activity.location} </p>
+              <Link to="activities/new">
+                <button>Edit Activities</button>
+                <button>Message</button>
+              </Link>
+            </div>
+          ))}
+      </div>
+    </section>
+  );
+}
